@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nosifer&display=swap');
+
+        html {
+            scroll-behavior: smooth;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: black;
+            margin: 0;
+            min-height: 200vh;
+            position: relative;
+            overflow-x: hidden;
+            font-family: Arial, sans-serif;
+        }
+        
+        .header-section {
+            display: block;
+            text-align: center;
+            padding: 20px 0;
+        }
+        
+        .logo-text {
+            font-family: 'Nosifer', cursive;
+            font-size: 120px;
+            color: #ff0000;
+            font-weight: bold;
+            text-shadow:
+                0 1px 0 #8b0000,
+                1px 2px 0 #8b0000,
+                2px 3px 0 #8b0000,
+                3px 4px 0 #8b0000,
+                4px 5px 0 #8b0000,
+                5px 6px 2px rgba(0, 0, 0, 0.75);
+            margin: 0;
+            letter-spacing: 2px;
+        }
+
+        .scroll-btn {
+            font-family: 'Nosifer', cursive;
+            font-size: 48px;
+            color: #8b0000;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 20px 40px;
+            margin-top: 40px;
+            text-shadow: 2px 2px 4px #000000;
+            background: linear-gradient(45deg, #8b0000, #ff0000);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .footer-section {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .copyright-text {
+            font-family: 'Nosifer', cursive;
+            font-size: 24px;
+            color: #8b0000;
+            text-align: center;
+            background: linear-gradient(45deg, #8b0000, #ff0000);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 2px 2px 4px #000000;
+        }
+    </style>
+</head>
+<body>
+    <div class="header-section">
+        <div class="logo-text">WNCRY</div>
+        <button class="scroll-btn" onclick="scrollToBottom()">▼</button>
+    </div>
+
+    <div id="footer" class="footer-section">
+        <div class="copyright-text">
+            WNCRY ALL RIGHTS 2025
+        </div>
+    </div>
+
+    <script>
+        function scrollToBottom() {
+            window.scrollTo({ 
+                top: document.body.scrollHeight,
+                behavior: 'smooth' 
+            });
+        }
+    </script>
+</body>
+</html>
