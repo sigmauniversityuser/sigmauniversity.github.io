@@ -1,104 +1,300 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <title>wncry</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Nosifer&display=swap');
-
-        html {
-            scroll-behavior: smooth;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            background-color: black;
-            margin: 0;
-            min-height: 200vh;
-            position: relative;
-            overflow-x: hidden;
-            font-family: Arial, sans-serif;
-        }
-        
-        .header-section {
-            display: block;
-            text-align: center;
-            padding: 20px 0;
-        }
-        
-        .logo-text {
-            font-family: 'Nosifer', cursive;
+        body { margin: 0; }
+        canvas { display: block; }
+        #endText {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Arial Black', sans-serif;
             font-size: 120px;
             color: #ff0000;
-            font-weight: bold;
-            text-shadow:
-                0 1px 0 #8b0000,
-                1px 2px 0 #8b0000,
-                2px 3px 0 #8b0000,
-                3px 4px 0 #8b0000,
-                4px 5px 0 #8b0000,
-                5px 6px 2px rgba(0, 0, 0, 0.75);
-            margin: 0;
-            letter-spacing: 2px;
+            text-shadow: 0 0 20px #000;
+            opacity: 0;
+            transition: opacity 2s;
         }
-
-        .scroll-btn {
-            font-family: 'Nosifer', cursive;
-            font-size: 48px;
-            color: #8b0000;
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 20px 40px;
-            margin-top: 40px;
-            text-shadow: 2px 2px 4px #000000;
-            background: linear-gradient(45deg, #8b0000, #ff0000);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .footer-section {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .copyright-text {
-            font-family: 'Nosifer', cursive;
+        #creakSound {
+            opacity: 0;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: monospace;
+            color: white;
             font-size: 24px;
-            color: #8b0000;
-            text-align: center;
-            background: linear-gradient(45deg, #8b0000, #ff0000);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 2px 2px 4px #000000;
         }
     </style>
 </head>
 <body>
-    <div class="header-section">
-        <div class="logo-text">WNCRY</div>
-        <button class="scroll-btn" onclick="scrollToBottom()">▼</button>
-    </div>
-
-    <div id="footer" class="footer-section">
-        <div class="copyright-text">
-            WNCRY ALL RIGHTS 2025
-        </div>
-    </div>
-
+    <div id="endText">GG</div>
+    <div id="creakSound">*creak*</div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        function scrollToBottom() {
-            window.scrollTo({ 
-                top: document.body.scrollHeight,
-                behavior: 'smooth' 
-            });
+        let scene, camera, renderer;
+        let walkingPath = 0;
+        let lookPhase = 0;
+        let isLooking = false;
+        let doorOpenDelay = false;
+        let isDoorOpen = false;
+        let bats = [];
+        let house, door;
+        let skyCamera = false;
+        let lookAround = { x: 0, y: 0 };
+        
+        function init() {
+            scene = new THREE.Scene();
+            scene.fog = new THREE.Fog(0x000033, 1, 30);
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x202020);
+            scene.add(ambientLight);
+            const moonLight = new THREE.DirectionalLight(0xaaaaff, 0.4);
+            moonLight.position.set(1, 2, 3);
+            scene.add(moonLight);
+
+            createGround();
+            createHouse();
+            createSky();
+            createBats();
+            
+            camera.position.set(0, 2, 20);
+            camera.lookAt(0, 2, 0);
+
+            animate();
         }
+
+        function createBats() {
+            const batGeometry = new THREE.BufferGeometry();
+            const wingGeometry = new THREE.BufferGeometry();
+            
+            // Bat body points
+            const vertices = new Float32Array([
+                -0.2, 0, 0,    // body left
+                0.2, 0, 0,     // body right
+                0, 0.1, 0.1    // head
+            ]);
+            
+            // Wing points
+            const wingVertices = new Float32Array([
+                0, 0, 0,       // center
+                0.5, 0.2, 0,   // tip
+                0.3, -0.1, 0   // bottom
+            ]);
+            
+            batGeometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+            wingGeometry.setAttribute('position', new THREE.BufferAttribute(wingVertices, 3));
+            
+            const batMaterial = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide });
+            
+            for(let i = 0; i < 20; i++) {
+                const bat = new THREE.Group();
+                
+                const body = new THREE.Mesh(batGeometry, batMaterial);
+                const leftWing = new THREE.Mesh(wingGeometry, batMaterial);
+                const rightWing = new THREE.Mesh(wingGeometry, batMaterial);
+                
+                leftWing.scale.x = -1;
+                
+                bat.add(body);
+                bat.add(leftWing);
+                bat.add(rightWing);
+                
+                bat.position.set(0, -10, 4); // Start hidden inside house
+                bat.rotation.y = Math.random() * Math.PI * 2;
+                
+                bat.userData = {
+                    wingAngle: Math.random() * Math.PI * 2,
+                    speed: 0.2 + Math.random() * 0.3,
+                    radius: 1 + Math.random() * 2,
+                    height: Math.random() * 2,
+                    phase: Math.random() * Math.PI * 2
+                };
+                
+                bats.push(bat);
+                scene.add(bat);
+            }
+        }
+
+        function createGround() {
+            const groundGeometry = new THREE.PlaneGeometry(100, 100);
+            const groundMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x1a472a,
+                roughness: 0.8,
+                metalness: 0.2
+            });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.y = -0.5;
+            scene.add(ground);
+        }
+
+        function createHouse() {
+            house = new THREE.Group();
+
+            // Main house body
+            const walls = new THREE.Mesh(
+                new THREE.BoxGeometry(8, 6, 8),
+                new THREE.MeshPhongMaterial({ 
+                    color: 0x4a3728,
+                    roughness: 0.7,
+                    metalness: 0.2
+                })
+            );
+            walls.position.y = 3;
+            house.add(walls);
+
+            // Roof
+            const roof = new THREE.Mesh(
+                new THREE.ConeGeometry(6, 4, 4),
+                new THREE.MeshPhongMaterial({ color: 0x1a1a1a })
+            );
+            roof.position.y = 8;
+            roof.rotation.y = Math.PI / 4;
+            house.add(roof);
+
+            // Door
+            door = new THREE.Mesh(
+                new THREE.BoxGeometry(1.5, 3, 0.1),
+                new THREE.MeshPhongMaterial({ color: 0x2a1f1d })
+            );
+            door.position.set(0, 1.5, 4);
+            house.add(door);
+
+            // Windows with slight glow
+            const windowGeometry = new THREE.BoxGeometry(1.5, 1.5, 0.1);
+            const windowMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x2a2a2a,
+                emissive: 0x111111
+            });
+
+            const windows = [];
+            [-2, 2].forEach(x => {
+                const window = new THREE.Mesh(windowGeometry, windowMaterial);
+                window.position.set(x, 3.5, 4);
+                windows.push(window);
+                house.add(window);
+            });
+
+            scene.add(house);
+        }
+
+        function createSky() {
+            scene.background = new THREE.Color(0x000033);
+
+            // Stars
+            const starGeometry = new THREE.SphereGeometry(0.1, 8, 8);
+            const starMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            
+            for(let i = 0; i < 200; i++) {
+                const star = new THREE.Mesh(starGeometry, starMaterial);
+                star.position.set(
+                    Math.random() * 100 - 50,
+                    Math.random() * 30 + 10,
+                    Math.random() * 100 - 50
+                );
+                scene.add(star);
+            }
+
+            // Moon
+            const moonGeometry = new THREE.SphereGeometry(2, 32, 32);
+            const moonMaterial = new THREE.MeshBasicMaterial({ color: 0xffffcc });
+            const moon = new THREE.Mesh(moonGeometry, moonMaterial);
+            moon.position.set(20, 15, -20);
+            scene.add(moon);
+        }
+
+        function animateWalkAndLook() {
+            if (walkingPath < 1 && !isLooking) {
+                walkingPath += 0.002; // Slower walk
+                camera.position.z = 20 - (walkingPath * 14);
+                camera.position.y = 2 + Math.sin(walkingPath * 10) * 0.1;
+                camera.position.x = Math.sin(walkingPath * 10) * 0.2;
+                camera.lookAt(0, 2, 0);
+                
+                if (walkingPath >= 1) {
+                    isLooking = true;
+                    setTimeout(() => {
+                        doorOpenDelay = true;
+                        document.getElementById('creakSound').style.opacity = '1';
+                        setTimeout(() => {
+                            document.getElementById('creakSound').style.opacity = '0';
+                            isDoorOpen = true;
+                        }, 1000);
+                    }, 2000);
+                }
+            } else if (isLooking && !doorOpenDelay) {
+                // Looking around sequence
+                lookPhase += 0.02;
+                
+                // Create a looking pattern
+                lookAround.x = Math.sin(lookPhase) * 2;
+                lookAround.y = Math.cos(lookPhase * 0.5) * 0.5;
+                
+                camera.lookAt(lookAround.x, 2 + lookAround.y, 0);
+            }
+        }
+
+        function animateBats() {
+            if (isDoorOpen) {
+                bats.forEach((bat, index) => {
+                    if (bat.position.y < 20) {
+                        // Spiral upward movement
+                        bat.position.y += bat.userData.speed;
+                        bat.position.x = Math.sin(bat.position.y * 0.5 + bat.userData.phase) * bat.userData.radius;
+                        bat.position.z = Math.cos(bat.position.y * 0.5 + bat.userData.phase) * bat.userData.radius + 4;
+                        
+                        // Wing flapping
+                        bat.userData.wingAngle += 0.3;
+                        bat.children[1].rotation.y = Math.sin(bat.userData.wingAngle) * 0.5;
+                        bat.children[2].rotation.y = -Math.sin(bat.userData.wingAngle) * 0.5;
+                    }
+                });
+
+                // Check if bats have flown out to trigger end sequence
+                if (!skyCamera && bats[0].position.y > 10) {
+                    skyCamera = true;
+                    document.getElementById('endText').style.opacity = '1';
+                }
+            }
+        }
+
+        function animateDoor() {
+            if (isDoorOpen && door.rotation.y < Math.PI / 3) {
+                door.rotation.y += 0.02;
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            animateWalkAndLook();
+            animateDoor();
+            animateBats();
+
+            if (skyCamera) {
+                // Dramatic camera movement to sky
+                camera.position.y += 0.5;
+                camera.rotation.x -= 0.02;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        init();
     </script>
 </body>
 </html>
